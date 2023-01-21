@@ -1,4 +1,4 @@
-use wgpu;
+use wgpu::{self, Adapter};
 use cfg_if;
 use env_logger;
 use std::env;
@@ -19,38 +19,48 @@ fn main() {
             env_logger::init();
         }
     }
-
-    let instance = wgpu::Instance::new(wgpu::Backends::all());
-    instance
-        .enumerate_adapters(wgpu::Backends::all())
-        .map(|adapter| {
-            // Check if this adapter supports our surface
-            println!("{:#?}", adapter.get_info());
-
-            for i in 1..args.len() {
-                let s = &args[i];
-                if s == "features" {
-                    println!("{:#?}", adapter.features());
-                } else if s == "limits" {
-                    println!("{:#?}", adapter.limits());
-                } else if s == "downlevel" {
-                    println!("{:#?}", adapter.get_downlevel_capabilities());
-                } else if s == "texture" {
-                    println!("{:#?}", adapter.get_texture_format_features(
-                        wgpu::TextureFormat::Rgba8UnormSrgb));
+    if args.len() > 1 && args[1] == "help" {
+        println!("Prints the info for each adapter on the system");
+        println!("Options:");
+        println!("features -  print adapter features");
+        println!("limits -    print adapter limits");
+        println!("downlevel - prints info about the adapter");
+        println!("texture -   prints texture format for Rgba8UnormSrgb");
+        println!("help -      prints this list");
+        println!("");
+        println!("ex: cargo run -- features limits");
+    } else {
+        let instance = wgpu::Instance::new(wgpu::Backends::all());
+        instance
+            .enumerate_adapters(wgpu::Backends::all())
+            .map(|adapter| {
+                // Check if this adapter supports our surface
+                println!("{:#?}", adapter.get_info());
+                if args.len() > 1 && args[1] == "all" {
+                    for s in ["features", "limits", "downlevel", "texture"] {
+                        printo(&adapter, s);
+                    }
                 } else {
-                    println!("Prints the info for each adapter on the system");
-                    println!("Options:");
-                    println!("features -  print adapter features");
-                    println!("limits -    print adapter limits");
-                    println!("downlevel - prints info about the adapter");
-                    println!("texture -   prints texture format for Rgba8UnormSrgb");
-                    println!("help -      prints this list");
-                    println!("");
-                    println!("ex: cargo run -- features limts");
+                    for s in &args[1..] { printo(&adapter, s); }
                 }
-            }
-        })
-        .next()
-        .unwrap();
+            })
+            .next()
+            .unwrap();
+    }
+}
+
+// printo - print an option
+fn printo(adapter: &wgpu::Adapter, s: &str) {
+    if s == "features" {
+        println!("{:#?}", adapter.features());
+    } else if s == "limits" {
+        println!("{:#?}", adapter.limits());
+    } else if s == "downlevel" {
+        println!("{:#?}", adapter.get_downlevel_capabilities());
+    } else if s == "texture" {
+        println!("{:#?}", adapter.get_texture_format_features(
+            wgpu::TextureFormat::Rgba8UnormSrgb));
+    } else {
+        println!("option {}, is not legal here", s);
+    }
 }
