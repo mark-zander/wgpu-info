@@ -30,8 +30,7 @@ fn main() {
         println!("");
         println!("ex: cargo run -- features limits");
     } else {
-        let instance = wgpu::Instance::new(wgpu::Backends::all());
-        instance
+        wgpu::Instance::new(wgpu::Backends::all())
             .enumerate_adapters(wgpu::Backends::all())
             .map(|adapter| {
                 // Check if this adapter supports our surface
